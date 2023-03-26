@@ -9,38 +9,20 @@ import pandas as pd
 
 def read_world_bank_csv(filename):
     # Read the CSV file into a DataFrame
-    df = pd.read_excel(filename, header=3)
-    df = df.drop(['Indicator Code', 'Country Code'], axis=1)
-    df = df.dropna()
+    df = pd.read_csv(filename, header=2)
+    df = df.drop(['Indicator Code', 'Country Code', 'Indicator Name'], axis=1)
+    #df = df.dropna()
     df2 = df.transpose()
-    df_transposed = df2.iloc[3:]
-    #df = df.set_index('Country Name')#, 'Indicator Name')
+    df2.columns = df2.iloc[0]  # Set the first row as the column names
+    df = df.set_index('Country Name')
+    #df2 = df2.set_index(('Country Name', ''), append=True)
+    #df2 = df2.rename_axis('Year')
+    df2 = df2.rename_axis(columns='Country Name', index='Year')
+    df = df.rename_axis(index='Country Name', columns='Year')
 
-    return df_transposed, df2
+    df2 = df2.iloc[1:]  # Drop the first row
+    return df, df2
 
-
-
-data, area = read_world_bank_csv('API_19_DS2_en_excel_v2_4903056.xls')
-print(data)
-
-"""
-def read_world_bank_csv(filename):
-    # Read the CSV file into a DataFrame
-    df = pd.read_excel(filename, header=3)
-    df = df.drop(['Indicator Code', 'Country Code'], axis=1)
-    df = df.set_index('Country Name', 'Indicator Name')
-    
-    # Extract the country names and set them as the index
-    country_names = df.iloc[:, 4:-1]
-    df.set_index(country_names, inplace=True)
-    df.drop(df.columns[0], axis=1, inplace=True)
-    
-    # Transpose the DataFrame to make years as columns
-    #df1 = df.transpose()
-    
-    # Reset the index and rename the columns for the second DataFrame
-    df2 = df.reset_index()
-    df2.rename(columns={'index': 'Year'}, inplace=True)
-    df2.set_index('Year', inplace=True)
-    
-"""
+data, area = read_world_bank_csv('API_EG.ELC.ACCS.ZS_DS2_en_csv_v2_5348553.csv')
+print(data.head())
+print(area.head())
