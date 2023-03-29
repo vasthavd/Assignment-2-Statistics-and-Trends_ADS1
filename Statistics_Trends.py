@@ -5,11 +5,16 @@ Created on Tue Mar 21 12:22:35 2023
 @author: vasth
 """
 
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Mar 21 12:22:35 2023
+
+@author: vasth
+"""
+
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import seaborn as sns
-import cluster_tools as ct
 import stats as st
 
 def read_world_bank_csv(filename):
@@ -30,40 +35,43 @@ def read_world_bank_csv(filename):
     df2 = df2.iloc[1:]  # Drop the first row
     return df, df2
 
-data, area = read_world_bank_csv('Electricity.csv')
+
+
+# Indicator : Access to Electricity(% of Population)
+
+data, area = read_world_bank_csv('Access to Electricity(% of Population).csv')
 print(data.head())
 print(area.head())
 
-# Percentage of electricity
-# Select the 10 countries to plot
-countries = ['United States', 'China', 'Japan', 'Germany',  'India', 
+# Select the 10 countres_list to plot in order of the GDP list
+countres_list = ['United States', 'China', 'Japan', 'Germany',  'India', 
              'United Kingdom', 'France', 'Brazil', 'Italy', 'Canada']
 
-# Get the data for these countries
-data_countries = data.loc[countries]
+# Get the data for these countres_list
+data_countres_list = data.loc[countres_list]
 
 # Plot the data
 plt.figure(figsize=(10, 5)) # Set the size of the figure
-for country in countries:
-    plt.plot(data.columns, data_countries.loc[country], label=country)
+for country in countres_list:
+    plt.plot(data.columns, data_countres_list.loc[country], label=country)
 plt.xlabel('Year') # Set the label for the x-axis
 plt.xticks(rotation=90)
 plt.ylabel('% of population with access to electricity') # Set the label for the y-axis
 plt.title('Access to Electricity by Country') # Set the title for the plot
 plt.legend() # Show the legend
 
-#urban population
+# Indicator : Urban population
 
-up, up_t = read_world_bank_csv('urbanp.csv')
+up, up_t = read_world_bank_csv('Urban population.csv')
 
 
-# Get the data for these countries
-up_countries = up.loc[countries]
+# Get the data for these countres_list
+up_countres_list = up.loc[countres_list]
 
 # Plot the data
 plt.figure(figsize=(7, 5)) # Set the size of the figure
-for country in countries:
-    plt.plot(up.columns, up_countries.loc[country], label=country)
+for country in countres_list:
+    plt.plot(up.columns, up_countres_list.loc[country], label=country)
 plt.xlabel('Year') # Set the label for the x-axis
 plt.xlim(min(up.columns), max(up.columns))
 plt.ylabel('Urban population') # Set the label for the y-axis
@@ -75,39 +83,105 @@ plt.legend() # Show the legend
 #plt.xticks(np.arange(up.columns,10)) 
 
 
-#methane
+# Indicator : Methane emissions (kt of CO2 equivalent)
 
-methane, methane_t = read_world_bank_csv('Methane.csv')
+methane, methane_t = read_world_bank_csv('Methane emissions (kt of CO2 equivalent).csv')
 
 
-# Extract the data for the 5 countries
-#countries = ['China', 'United States', 'India', 'Canada', 'Japan']
+# Extract the data for the 5 countres_list
+#countres_list = ['China', 'United States', 'India', 'Canada', 'Japan']
 years = ['2015', '2016', '2017', '2018', '2019']
-usage = up.loc[countries, years]
-
+usage = methane.loc[countres_list, years]
+plt.figure()
 # Plot the bar plot
 usage.plot(kind='bar')
 plt.xlabel('Country')
 plt.ylabel('Electricity usage')
-plt.title('Electricity usage in 5 countries from 2015 to 2019')
+plt.title('Electricity usage in 5 countres_list')
 
 
 print(methane.describe())
 print(usage)
 
 
+# Indicator name: Forest area (% of land area)
+
+forest_area, forestarea_t = read_world_bank_csv('Forest area (% of land area).csv')
+
+less_forest = forest_area.loc[countres_list, years]
+#checking the data is having ample values for plotting after cleaning
+fda = forest_area.notnull().sum().sort_values(ascending = False).rename('Non-null Count')
+# Create dataframe with non-null count and year columns
+fda_df = fda.to_frame().reset_index()
+
+# Calculate median non-null count
+median_count = fda_df['Non-null Count'].median()
+
+# Group years based on non-null count above or below median
+fda_groups = fda_df.groupby(fda_df['Non-null Count'] > median_count).apply(lambda x: x['Year'].tolist())
+
+# Print groups with messages indicating count
+print(f"Years with non-null count above the median count ({median_count}):")
+print(fda_groups[True])
+print()
+print(f"Years with non-null count less than or equal to the median count ({median_count}):")
+print(fda_groups[False])
+
+
+
+# Plot the bar plot
+plt.figure()
+less_forest.plot(kind='bar')
+plt.xlabel('Country')
+plt.ylabel('Forest less usage')
+plt.title('Forest usage in 5 countres_list from 2015 to 2019')
+plt.legend(loc='upper right')
+
+
+# Correlation map with all indicators for the year 2015
+
 fd = pd.merge(data['2015'], up['2015'], left_index=True, right_index=True)
 fd = pd.merge(fd, methane['2015'], left_index=True, right_index=True)
-fd.columns = ['Electricity', 'Urbanp', 'Methane']
-# Show the merged dataframe
-print(fd)
-plt.figure()
-corr_matrix = fd.corr(method='pearson')
+fd = pd.merge(fd, forest_area['2015'], left_index=True, right_index=True)
+fd.columns = ['Electricity', 'Urbanp', 'Methane', 'Forest']
 
-# Plot the correlation heatmap using Seaborn
-sns.heatmap(corr_matrix, annot=True, cmap='coolwarm')
+plt.figure()
+
+# Calculate the correlation matrix
+corr_matrix = fd.corr()
+
+# Create a figure and axis object
+fig, ax = plt.subplots()
+
+# Create a heatmap
+im = ax.imshow(corr_matrix, cmap='coolwarm')
+
+# Set the ticks and tick labels
+ax.set_xticks(range(len(fd.columns)))
+ax.set_yticks(range(len(fd.columns)))
+ax.set_xticklabels(fd.columns)
+ax.set_yticklabels(fd.columns)
+
+# Rotate the tick labels and set them at the center
+plt.setp(ax.get_xticklabels(), rotation=45, ha='right',
+         rotation_mode='anchor')
+
+# Add the correlation values inside the heatmap
+for i in range(len(fd.columns)):
+    for j in range(len(fd.columns)):
+        text = ax.text(j, i, round(corr_matrix.iloc[i, j], 2),
+                       ha="center", va="center", color="w")
+
+# Add a colorbar
+cbar = ax.figure.colorbar(im, ax=ax)
+
+# Set the title and show the plot
+ax.set_title("Correlation Heatmap")
+plt.tight_layout()
 
 
 
 plt.show()
+
+
 
