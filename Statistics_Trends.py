@@ -5,13 +5,6 @@ Created on Tue Mar 21 12:22:35 2023
 @author: vasth
 """
 
-# -*- coding: utf-8 -*-
-"""
-Created on Tue Mar 21 12:22:35 2023
-
-@author: vasth
-"""
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -35,8 +28,27 @@ def read_world_bank_csv(filename):
     df2 = df2.iloc[1:]  # Drop the first row
     return df, df2
 
+def group_years_by_count(df):
+    # Create dataframe with non-null count and year columns
+    fda_df = df.notnull().sum().sort_values(ascending=False).to_frame().reset_index()
+    fda_df.columns = ['Year', 'Non-null Count']
 
+    # Calculate median non-null count
+    median_count = fda_df['Non-null Count'].median()
 
+    # Group years based on non-null count above or below median
+    fda_groups = fda_df.groupby(fda_df['Non-null Count'] > median_count).apply(lambda x: x['Year'].tolist())
+
+    # Print groups with messages indicating count
+    result = []
+    result.append(f"Years with non-null count above the median count ({median_count}):")
+    result.append(str(fda_groups[True]))
+    result.append("")
+    result.append(f"Years with non-null count less than or equal to the median count ({median_count}):")
+    result.append(str(fda_groups[False]))
+    return '\n'.join(result)
+
+    
 # Indicator : Access to Electricity(% of Population)
 
 data, area = read_world_bank_csv('Access to Electricity(% of Population).csv')
@@ -51,14 +63,15 @@ countres_list = ['United States', 'China', 'Japan', 'Germany',  'India',
 data_countres_list = data.loc[countres_list]
 
 # Plot the data
-plt.figure(figsize=(10, 5)) # Set the size of the figure
+plt.figure() # Set the size of the figure
 for country in countres_list:
     plt.plot(data.columns, data_countres_list.loc[country], label=country)
 plt.xlabel('Year') # Set the label for the x-axis
-plt.xticks(rotation=90)
+plt.xlim(min(data.columns), max(data.columns))
+plt.xticks(np.arange(0, len(data.columns)+1, 5), rotation = 90)
 plt.ylabel('% of population with access to electricity') # Set the label for the y-axis
 plt.title('Access to Electricity by Country') # Set the title for the plot
-plt.legend() # Show the legend
+plt.legend( bbox_to_anchor=(1.05, 1)) # Show the legend
 
 # Indicator : Urban population
 
@@ -69,7 +82,7 @@ up, up_t = read_world_bank_csv('Urban population.csv')
 up_countres_list = up.loc[countres_list]
 
 # Plot the data
-plt.figure(figsize=(7, 5)) # Set the size of the figure
+plt.figure() # Set the size of the figure
 for country in countres_list:
     plt.plot(up.columns, up_countres_list.loc[country], label=country)
 plt.xlabel('Year') # Set the label for the x-axis
@@ -79,7 +92,7 @@ plt.xticks(np.arange(0, len(up.columns)+1, 5), rotation = 90)
 #plt.xticks(rotation = 90)
 plt.title('Population') # Set the title for the plot
 
-plt.legend() # Show the legend
+plt.legend(bbox_to_anchor=(1.05, 1)) # Show the legend
 #plt.xticks(np.arange(up.columns,10)) 
 
 
@@ -109,24 +122,7 @@ print(usage)
 forest_area, forestarea_t = read_world_bank_csv('Forest area (% of land area).csv')
 
 less_forest = forest_area.loc[countres_list, years]
-#checking the data is having ample values for plotting after cleaning
-fda = forest_area.notnull().sum().sort_values(ascending = False).rename('Non-null Count')
-# Create dataframe with non-null count and year columns
-fda_df = fda.to_frame().reset_index()
-
-# Calculate median non-null count
-median_count = fda_df['Non-null Count'].median()
-
-# Group years based on non-null count above or below median
-fda_groups = fda_df.groupby(fda_df['Non-null Count'] > median_count).apply(lambda x: x['Year'].tolist())
-
-# Print groups with messages indicating count
-print(f"Years with non-null count above the median count ({median_count}):")
-print(fda_groups[True])
-print()
-print(f"Years with non-null count less than or equal to the median count ({median_count}):")
-print(fda_groups[False])
-
+print(group_years_by_count(forest_area))
 
 
 # Plot the bar plot
@@ -134,16 +130,74 @@ plt.figure()
 less_forest.plot(kind='bar')
 plt.xlabel('Country')
 plt.ylabel('Forest less usage')
-plt.title('Forest usage in 5 countres_list from 2015 to 2019')
+plt.title('Forest usage in 5 countres_list from 2014 to 2019')
+plt.legend(loc='upper right')
+
+# Indicator name: GDP growth(annual %)
+
+GDP, GDP_t = read_world_bank_csv('GDP growth(annual %).csv')
+
+gdp_growth = GDP.loc[countres_list, years]
+plt.figure()
+gdp_growth.plot(kind='bar')
+plt.xlabel('Country')
+plt.ylabel('GDP')
+plt.title('GDP growth for 5 years')
+plt.legend(loc='upper right')
+
+#Indicator name: CO2 emmisons(kt))
+co2, c02_t = read_world_bank_csv('CO2 emmisons(kt).csv')
+
+co2_growth = co2.loc[countres_list, years]
+plt.figure()
+co2_growth.plot(kind='bar')
+plt.xlabel('Country')
+plt.ylabel('Co2')
+plt.title('CO2 emmisons(kt)')
 plt.legend(loc='upper right')
 
 
-# Correlation map with all indicators for the year 2015
+#Indiacator Name: Agricultural land (% of land area)
 
-fd = pd.merge(data['2015'], up['2015'], left_index=True, right_index=True)
-fd = pd.merge(fd, methane['2015'], left_index=True, right_index=True)
-fd = pd.merge(fd, forest_area['2015'], left_index=True, right_index=True)
-fd.columns = ['Electricity', 'Urbanp', 'Methane', 'Forest']
+Ag, ad_t = read_world_bank_csv('Agricultural land (% of land area).csv')
+ag_countres_list = Ag.loc[countres_list, years]
+plt.figure()
+ag_countres_list.plot(kind='bar')
+plt.xlabel('Country')
+plt.ylabel('Agri land')
+plt.title('Agricultural land (% of land area)')
+plt.legend(loc='upper right')
+
+
+#Indiacator Name: Electric power consumption (kWh per capita)
+ec, ec_t = read_world_bank_csv('Electric power consumption (kWh per capita).csv')
+# Get the data for these countres_list
+ec_countres_list = ec.loc[countres_list]
+
+# Plot the data
+plt.figure() # Set the size of the figure
+for country in countres_list:
+    plt.plot(ec.columns, ec_countres_list.loc[country], label=country)
+plt.xlabel('Year') # Set the label for the x-axis
+plt.xlim(min(ec.columns), max(ec.columns))
+plt.ylabel('Electric power consumption (kWh per capita)') # Set the label for the y-axis
+plt.xticks(np.arange(0, len(ec.columns)+1, 5), rotation = 90)
+#plt.xticks(rotation = 90)
+plt.title('Electric power consumption (kWh per capita)') # Set the title for the plot
+
+plt.legend(bbox_to_anchor=(1.05, 1))
+
+
+# Correlation map with all indicators for the year 2014
+
+fd = pd.merge(data['2014'], up['2014'], left_index=True, right_index=True)
+fd = pd.merge(fd, methane['2014'], left_index=True, right_index=True)
+fd = pd.merge(fd, forest_area['2014'], left_index=True, right_index=True)
+fd = pd.merge(fd, GDP['2014'], left_index=True, right_index=True)
+fd = pd.merge(fd, Ag['2014'], left_index=True, right_index=True)
+fd = pd.merge(fd, co2['2014'], left_index=True, right_index=True)
+fd = pd.merge(fd, ec['2014'], left_index=True, right_index=True)
+fd.columns = ['Electricity', 'Urban_pop', 'Methane', 'Forest', 'GDP', 'Agri land', 'C02', 'ECP']
 
 plt.figure()
 
@@ -182,6 +236,3 @@ plt.tight_layout()
 
 
 plt.show()
-
-
-
