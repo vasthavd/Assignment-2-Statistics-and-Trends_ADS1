@@ -8,6 +8,7 @@ Created on Tue Mar 21 12:22:35 2023
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.ticker as ticker
 
 
 def read_world_bank_csv(file_name):
@@ -40,36 +41,37 @@ def read_world_bank_csv(file_name):
 
     """
     # Reading the CSV file into a DataFrame
-    year_as_column = pd.read_csv(file_name, header=2)
+    year_as_column = pd.read_csv(file_name, header = 2)
 
     # Dropping the first three columns, which are the header, 
     # Indicator Code, and Country Code.
     year_as_column = year_as_column.drop(['Indicator Code', 'Country Code',
-                                          'Indicator Name'], axis=1)
+                                          'Indicator Name'], axis = 1)
 
     # Dropping any rows that contain missing values and cleaning dataframe.
     year_as_column.dropna()
-    year_as_column.dropna(how='all', axis=1, inplace=True)
+    year_as_column.dropna(how = 'all', axis = 1, inplace = True)
     
     # Setting the index of the DataFrame to the Country Name column.
     year_as_column = year_as_column.set_index('Country Name')
 
     # Renaming the axis of the DataFrame to Years.
-    year_as_column = year_as_column.rename_axis(index='Country Name',
-                                                columns='Year')
+    year_as_column = year_as_column.rename_axis(index = 'Country Name',
+                                                columns = 'Year')
 
     # Transposing the DataFrame.
     country_as_column = year_as_column.transpose()
 
     # Renaming the axis of the DataFrame to Countries.
-    country_as_column = country_as_column.rename_axis(columns='Country Name', 
-                                                      index='Year')
+    country_as_column = country_as_column.rename_axis(columns = 'Country Name', 
+                                                      index = 'Year')
 
     # Dropping the first row of the DataFrame, which is just the column names.
     country_as_column = country_as_column.iloc[1:]
 
     # Returns the two DataFrames.
     return year_as_column, country_as_column
+
 
 
 def group_years_by_count(year_as_column_df):
@@ -124,6 +126,7 @@ def group_years_by_count(year_as_column_df):
     return '\n'.join(result)
 
 
+
 def line_plot(year_as_column_df, xlabel, ylabel, title):
     
   """
@@ -156,7 +159,7 @@ def line_plot(year_as_column_df, xlabel, ylabel, title):
   plt.figure()
   for country in countries_list:
     plt.plot(year_as_column_df.columns, 
-             sorted_countries_list.loc[country], label=country)
+             sorted_countries_list.loc[country], label = country)
     
   # Set the x-axis limits to the minimum and maximum years in the DataFrame.
   plt.xlim(min(year_as_column_df.columns), max(year_as_column_df.columns))
@@ -173,11 +176,13 @@ def line_plot(year_as_column_df, xlabel, ylabel, title):
   # Set the title for the plot.
   plt.title(title)
   
+  
   # Add a legend to the plot, being labeled with the corresponding country.
-  plt.legend(bbox_to_anchor=(1.05, 1))
+  plt.legend(bbox_to_anchor = (1.05, 1))
   
   # Return the current figure object.
   return plt.gcf()
+
 
 
 def bar_plot(year_as_column_df, xlabel, ylabel, title):
@@ -211,7 +216,7 @@ def bar_plot(year_as_column_df, xlabel, ylabel, title):
   
   # Plot the data.
   plt.figure()
-  sorted_countries_list.plot(kind='bar')
+  sorted_countries_list.plot(kind = 'bar')
 
   # Set the label for the x-axis.
   plt.xlabel(xlabel)
@@ -219,14 +224,22 @@ def bar_plot(year_as_column_df, xlabel, ylabel, title):
   # Set the label for the y-axis.
   plt.ylabel(ylabel)
 
+  # create a ScalarFormatter object and set its formatting options
+  formatter = ticker.ScalarFormatter(useMathText=False)
+  formatter.set_scientific(False)
+
+  # set the y-axis formatter to the ScalarFormatter object
+  plt.gca().yaxis.set_major_formatter(formatter)
+  
   # Set the title for the plot.
   plt.title(title)
-  
+
   # Add a legend to the plot, being labeled with the corresponding year.
-  plt.legend(loc='upper right')
+  plt.legend(loc = 'upper right')
   
   # Return the current figure object.
   return plt.gcf()
+
 
 
 def correlation_heatmap(year):
@@ -249,14 +262,16 @@ def correlation_heatmap(year):
     
     # Merge the data for the given year
     m_df = pd.merge(ate[year], urban_pop[year],
-                  left_index=True, right_index=True)
-    m_df = pd.merge(m_df, methane[year], left_index=True, right_index=True)
-    m_df = pd.merge(m_df, forest_area[year], left_index=True, right_index=True)
-    m_df = pd.merge(m_df, gdp[year], left_index=True, right_index=True)
-    m_df = pd.merge(m_df, agri[year], left_index=True, right_index=True)
-    m_df = pd.merge(m_df, ce[year], left_index=True, right_index=True)
-    m_df = pd.merge(m_df, energy_use[year], left_index=True, right_index=True)
-    m_df = pd.merge(m_df, gpi[year], left_index=True, right_index=True)
+                    left_index = True, right_index = True)
+    m_df = pd.merge(m_df, methane[year], left_index = True, right_index = True)
+    m_df = pd.merge(m_df, forest_area[year],
+                    left_index = True, right_index = True)
+    m_df = pd.merge(m_df, gdp[year], left_index = True, right_index = True)
+    m_df = pd.merge(m_df, agri[year], left_index = True, right_index = True)
+    m_df = pd.merge(m_df, ce[year], left_index = True, right_index = True)
+    m_df = pd.merge(m_df, energy_use[year],
+                    left_index = True, right_index = True)
+    m_df = pd.merge(m_df, gpi[year], left_index = True, right_index = True)
     m_df.columns = ['Electricity', 'Urban_pop', 'Methane', 'Forest',
                   'GDP', 'Agri land', 'C02', 'Energy_Use', 'GPI']
 
@@ -267,7 +282,7 @@ def correlation_heatmap(year):
     corr_matrix = m_df.corr()
 
     # Create a heatmap
-    heat_map = ax.imshow(corr_matrix, cmap='coolwarm')
+    heat_map = ax.imshow(corr_matrix, cmap = 'coolwarm')
 
     # Set the ticks and tick labels
     ax.set_xticks(range(len(m_df.columns)))
@@ -276,24 +291,38 @@ def correlation_heatmap(year):
     ax.set_yticklabels(m_df.columns)
 
     # Rotate the tick labels and set them at the center
-    plt.setp(ax.get_xticklabels(), rotation=45, ha='right',
-             rotation_mode='anchor')
+    plt.setp(ax.get_xticklabels(), rotation = 45, ha = 'right',
+             rotation_mode = 'anchor')
 
     # Add the correlation values inside the heatmap
     for i in range(len(m_df.columns)):
         for j in range(len(m_df.columns)):
             text = ax.text(j, i, round(corr_matrix.iloc[i, j], 2),
-                           ha="center", va="center", color="w")
+                           ha = "center", va = "center", color = "w")
 
     # Add a colorbar
-    cbar = ax.figure.colorbar(heat_map, ax=ax)
+    cbar = ax.figure.colorbar(heat_map, ax = ax)
 
     # Set the title and show the plot
     ax.set_title(f"Correlation Heatmap for {year}")
     plt.tight_layout()
 
-    
-# Indicator : Access to Electricity(% of Population)
+ 
+
+"""
+
+Indicator analysis is performed using read_world_bank_csv() to read different
+indicator files, using the describe() method to have a look on the 
+statistical analysis of the dataframes, calling the group_years_by_count() 
+function to find out which yaers in the datasets have more entries in order to 
+analyze accurate findings by referring to specifc years for bar_plot() and 
+correlation_heatmap() analysis for the following indicators individually.
+
+"""
+
+
+   
+# Indicator name: Access to Electricity(% of Population)
 
 ate, ate_t = read_world_bank_csv('Access to Electricity(% of Population).csv')
 print('\nAccess to Electricity(% of Population)')
@@ -305,7 +334,7 @@ print(group_years_by_count(ate))
 line_plot(ate, 'Year', '% of population', 
                             'Access to Electricity for GDP list countries')
 
-# Indicator : Urban population
+# Indicator name: Urban population
 
 urban_pop, urban_pop_t = read_world_bank_csv('Urban population.csv')
 print('\nUrban population')
@@ -315,15 +344,15 @@ line_plot(urban_pop, 'Year',
           'Urban populatio in 10 Millions', 
           'Urban population growth for GDP list countries')
 
-# Indicator : Methane emissions (kt of CO2 equivalent)
+# Indicator name: Methane emissions (kt of CO2 equivalent)
 
 methane, methane_t = read_world_bank_csv(
     'Methane emissions (kt of CO2 equivalent).csv')
 print('\nMethane emissions (kt of CO2 equivalent)')
 print(methane.describe())
+
 bar_plot(methane, 'Country', 
          'Emissions in KT', 'Methane Emissions for GDP list countries')
-
 
 # Indicator name: Forest area (% of land area)
 
@@ -347,33 +376,35 @@ print(gdp.describe())
 bar_plot(gdp, 'Country', 'GDP growth(annual %)', 'GDP growth for 5 years')
 
 
-#Indicator name: CO2 emmisons(kt)
+# Indicator name: CO2 emmisons(kt)
 
 ce, ce_t = read_world_bank_csv('CO2 emmisons(kt).csv')
 print('\nCO2 emmisons(kt)')
 print(ce.describe())
+
 bar_plot(ce, 'Country', 'CO2 emmisons(kt)', 
          'CO2 emmisons(kt) growth for GDP list countries over 5 years')
 
 
-#Indiacator Name: Agricultural land (% of land area)
+# Indicator name: Agricultural land (% of land area)
 
 agri, agri_t = read_world_bank_csv('Agricultural land (% of land area).csv')
 print('\nAgricultural land (% of land area)')
 print(group_years_by_count(agri))
 print(agri.describe())
+
 bar_plot(agri, 'Country', 'Agricultural land (% of land area)', 
          'Agricultural land for GDP list countries over 5 years')
 
 
-#Indiacator Name: Electric power consumption (kWh per capita)
+# Indiacator name: Electric power consumption (kWh per capita)
 
-ec, ec_t = read_world_bank_csv('EPC(kWh per capita).csv')
+epc, epc_t = read_world_bank_csv('EPC(kWh per capita).csv')
 print('\nElectric power consumption (kWh per capita)')
-print(group_years_by_count(ec))
-print(ec.describe())
+print(group_years_by_count(epc))
+print(epc.describe())
 
-line_plot(ec, 'Year', 'kWh per capita', 
+line_plot(epc, 'Year', 'kWh per capita', 
           'Electric power consumption for GDP list countries')
 
 # Indicator Name: School enrollment, primary and secondary (gross), (GPI)
@@ -382,6 +413,7 @@ gpi, gpi_t = read_world_bank_csv('GPI.csv')
 print('\nSchool enrollment, primary and secondary (gross),(GPI)')
 print(group_years_by_count(gpi))
 print(gpi.describe())
+
 bar_plot(gpi, 'Country', 'Gender Parity Index', 
          'Gender Parity Index growth for GDP list countries over 5 years')
 
@@ -393,11 +425,12 @@ energy_use, energy_t = read_world_bank_csv(
 print('\nEnergy use (kg of oil equivalent per capita)')
 print(energy_use.describe())
 print(group_years_by_count(energy_use))
+
 line_plot(energy_use, 'Year', 'kg of oil equivalent per capita', 
           'Energy use for GDP list countries')
 
 
-# Correlation Analysis for several years
+# Correlation Analysis for several years by calling correlation_heatmap fun.
 
 
 correlation_heatmap('1990')
