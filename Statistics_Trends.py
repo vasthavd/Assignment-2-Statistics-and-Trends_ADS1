@@ -4,13 +4,17 @@ Created on Tue Mar 21 12:22:35 2023
 
 @author: vasth
 """
+# Importing all required modules with genarlised aliasing
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
+import stats as st
 
 
+
+# Defining a function read_world_bank_csv
 def read_world_bank_csv(file_name):
     
     """
@@ -40,6 +44,7 @@ def read_world_bank_csv(file_name):
     If there is an error reading the CSV file.
 
     """
+    
     # Reading the CSV file into a DataFrame
     year_as_column = pd.read_csv(file_name, header = 2)
 
@@ -74,6 +79,7 @@ def read_world_bank_csv(file_name):
 
 
 
+# Defining a function group_years_by_count
 def group_years_by_count(year_as_column_df):
     
     """
@@ -127,6 +133,7 @@ def group_years_by_count(year_as_column_df):
 
 
 
+# Defining a function line_plot
 def line_plot(year_as_column_df, xlabel, ylabel, title):
     
   """
@@ -148,6 +155,7 @@ def line_plot(year_as_column_df, xlabel, ylabel, title):
   None, Plots a matplotlib figure object: Line - Plot.
   
   """
+  
   # Select the 10 countries to plot in order of the GDP list.
   countries_list = ['United States', 'China', 'Japan', 'Germany',  'India', 
                     'United Kingdom', 'France', 'Brazil', 'Italy', 'Canada']
@@ -185,6 +193,7 @@ def line_plot(year_as_column_df, xlabel, ylabel, title):
 
 
 
+# Defining a function bar_plot
 def bar_plot(year_as_column_df, xlabel, ylabel, title):
     
   """
@@ -204,15 +213,18 @@ def bar_plot(year_as_column_df, xlabel, ylabel, title):
   Returns
   -------
       None, Plots a matplotlib figure object : Bar - Plot.
+      
   """
+  
   # Select the 10 countries to plot in order of the GDP list.
   countries_list = ['United States', 'China', 'Japan', 'Germany',  'India', 
                     'United Kingdom', 'France', 'Brazil', 'Italy', 'Canada']
+  
   # Select the 5 years to plot which have large nuber of entries.
   years = ['2015', '2016', '2017', '2018', '2019']
+  
   # Get the data for these countries.
   sorted_countries_list = year_as_column_df.loc[countries_list, years]
-  
   
   # Plot the data.
   plt.figure()
@@ -242,6 +254,7 @@ def bar_plot(year_as_column_df, xlabel, ylabel, title):
 
 
 
+# Defining a function correlation_heatmap
 def correlation_heatmap(year):
     
     """
@@ -260,7 +273,7 @@ def correlation_heatmap(year):
     
     """
     
-    # Merge the data for the given year
+    # Merge all the dataframes required for the given year
     m_df = pd.merge(ate[year], urban_pop[year],
                     left_index = True, right_index = True)
     m_df = pd.merge(m_df, methane[year], left_index = True, right_index = True)
@@ -298,7 +311,8 @@ def correlation_heatmap(year):
     for i in range(len(m_df.columns)):
         for j in range(len(m_df.columns)):
             text = ax.text(j, i, round(corr_matrix.iloc[i, j], 2),
-                           ha = "center", va = "center", color = "w")
+                           ha = "center", va = "center", 
+                           color = "w", rotation = 45)
 
     # Add a colorbar
     cbar = ax.figure.colorbar(heat_map, ax = ax)
@@ -316,7 +330,8 @@ indicator files, using the describe() method to have a look on the
 statistical analysis of the dataframes, calling the group_years_by_count() 
 function to find out which yaers in the datasets have more entries in order to 
 analyze accurate findings by referring to specifc years for bar_plot() and 
-correlation_heatmap() analysis for the following indicators individually.
+correlation_heatmap() analysis for the following indicators individually and
+save the figures with DPI of 300.
 
 """
 
@@ -332,7 +347,7 @@ print(ate.describe())
 print(group_years_by_count(ate))
 
 line_plot(ate, 'Year', '% of population', 
-                            'Access to Electricity for GDP list countries')
+          'Access to Electricity for GDP list countries')
 
 # Indicator name: Urban population
 
@@ -365,7 +380,6 @@ print(forest_area.describe())
 bar_plot(forest_area, 'Country', 'Forest area (% of land area)', 
          'Forest usage for GDP list countries from 2015 to 2019')
 
-
 # Indicator name: GDP growth(annual %)
 
 gdp, gdp_t = read_world_bank_csv('GDP growth(annual %).csv')
@@ -374,7 +388,6 @@ print(group_years_by_count(gdp))
 print(gdp.describe())
 
 bar_plot(gdp, 'Country', 'GDP growth(annual %)', 'GDP growth for 5 years')
-
 
 # Indicator name: CO2 emmisons(kt)
 
@@ -385,7 +398,6 @@ print(ce.describe())
 bar_plot(ce, 'Country', 'CO2 emmisons(kt)', 
          'CO2 emmisons(kt) growth for GDP list countries over 5 years')
 
-
 # Indicator name: Agricultural land (% of land area)
 
 agri, agri_t = read_world_bank_csv('Agricultural land (% of land area).csv')
@@ -395,7 +407,6 @@ print(agri.describe())
 
 bar_plot(agri, 'Country', 'Agricultural land (% of land area)', 
          'Agricultural land for GDP list countries over 5 years')
-
 
 # Indiacator name: Electric power consumption (kWh per capita)
 
@@ -417,7 +428,6 @@ print(gpi.describe())
 bar_plot(gpi, 'Country', 'Gender Parity Index', 
          'Gender Parity Index growth for GDP list countries over 5 years')
 
-
 # Indicator name : Energy use (kg of oil equivalent per capita)
 
 energy_use, energy_t = read_world_bank_csv(
@@ -425,16 +435,24 @@ energy_use, energy_t = read_world_bank_csv(
 print('\nEnergy use (kg of oil equivalent per capita)')
 print(energy_use.describe())
 print(group_years_by_count(energy_use))
+print(st.skew(energy_use))
+print(st.kurtosis(energy_use))
 
 line_plot(energy_use, 'Year', 'kg of oil equivalent per capita', 
           'Energy use for GDP list countries')
 
-
-# Correlation Analysis for several years by calling correlation_heatmap fun.
-
+# Correlation Analysis for several years by calling correlation_heatmap func.
+# Saving figures 
 
 correlation_heatmap('1990')
-correlation_heatmap('2000')
-correlation_heatmap('2010')
+plt.savefig('Correlation_Heatmap_1990.png', dpi = 300)
 
+correlation_heatmap('2000')
+plt.savefig('Correlation_Heatmap_2000.png', dpi = 300)
+
+correlation_heatmap('2010')
+plt.savefig('Correlation_Heatmap_2010.png', dpi = 300)
+
+# Showing all of the plots
 plt.show()
+
